@@ -4,12 +4,18 @@ from datetime import datetime
 from log import LOGGER
 
 
-def run_shell_command(*args):
+def run_shell_command(*args, input_lines=None) -> str:
     LOGGER.debug('Running command %s', args)
 
     start = datetime.utcnow()
 
-    execution_result = subprocess.run(args, capture_output=True)
+    if input_lines:
+        input_lines = '\n'.join(input_lines).encode('utf8')
+
+    execution_result = subprocess.run(
+        args,
+        capture_output=True,
+        input=input_lines)
 
     elapsed = datetime.utcnow() - start
 
