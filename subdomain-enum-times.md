@@ -2,13 +2,13 @@
 
 ## Premise
 
-Subdomain enumeration tools have a list of sources that they scrap in order to extract information about subdomains. Common sources, such as [DNSdumbster](https://dnsdumpster.com/) and [Common Crawl](https://commoncrawl.org/), are available in several tools. In order to optimize the time spent running the tools, it's a good idea to restrict the duplicate sources so that only one tool scraps each source. But, what tool should scrap the common sources? Does that even make any difference?
+Subdomain enumeration tools have a list of sources that they scrap in order to extract information about subdomains. Common sources, such as [DNSdumbster](https://dnsdumpster.com/) and [Common Crawl](https://commoncrawl.org/), are scraped by several tools. Intuitively, it's a good idea to restrict the sources so that only one tool scraps each source in order to optimize the time spent. But that begs the question, what tool should scrap the common sources?
 
 ## Methodology
 
 For this study, `amass` and `subfinder` are used.
 
-The test contains in 3 steps:
+The test contains 3 steps:
 
 1. Execute both tools with all sources. This step exists so that there's a baseline to judge the results of the next steps.
 2. Execute both tools but only `amass` uses the duplicate sources.
