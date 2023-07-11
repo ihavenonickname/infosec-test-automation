@@ -1,6 +1,7 @@
 import argparse
 
 import log
+import prober
 from helper import run_shell_command
 from subdomain_enumeration import SourcesDupsStrategy, SubdomainEnumerator
 
@@ -18,6 +19,14 @@ def main():
     parser.add_argument(
         '--recursive',
         help='Should enumerate subdomains recursively?',
+        required=False,
+        type=bool,
+        default=False,
+        choices=[True, False])
+
+    parser.add_argument(
+        '--probe-subdomains',
+        help='Should probe the enumerated subdomains?',
         required=False,
         type=bool,
         default=False,
@@ -47,8 +56,20 @@ def main():
     else:
         subdomains = enumerator.enumerate_subdomains(args.domain)
 
-    for subdomain in subdomains:
-        print('>', subdomain)
+    if args.probe_subdomains:
+        probe_results = prober.probe(subdomains)
+
+        for item in probe_results:
+            print('URL:', item.url)
+            print('Status:', item.status_code)
+            cnames = ', '.join(item.cnames) if item.cnames else 'Unknown'
+            print('CNAMEs:', cnames)
+            techs = ', '.join(item.techs) if item.techs else 'Unknown'
+            print('Techs:', techs)
+            print()
+    else:
+        for subdomain in subdomains:
+            print('>', subdomain)
 
 
 if __name__ == '__main__':
