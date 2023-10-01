@@ -1,25 +1,42 @@
-import subprocess
+import asyncio
+import io
 from datetime import datetime
 
 from log import LOGGER
 
 
-def run_shell_command(*args, input_lines=None) -> str:
-    LOGGER.debug('Running command %s', args)
+_SEMAPHORE = asyncio.Semaphore(15)
+
+
+async def run_program(program, *args, stdin_lines=None) -> list[str]:
+    LOGGER.debug('Running program: %s %s', program, args)
+
+    if stdin_lines:
+        stdin_lines = '\n'.join(stdin_lines).encode('utf8')
 
     start = datetime.utcnow()
 
-    if input_lines:
-        input_lines = '\n'.join(input_lines).encode('utf8')
+    async with _SEMAPHORE:
+        process = await asyncio.create_subprocess_exec(
+            program,
+            *args,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            stdin=asyncio.subprocess.PIPE, )
 
-    execution_result = subprocess.run(
-        args,
-        capture_output=True,
-        input=input_lines)
+        process_stdout, _ = await process.communicate(stdin_lines)
 
     elapsed = datetime.utcnow() - start
 
-    LOGGER.debug('Return code is %d', execution_result.returncode)
-    LOGGER.debug('Elapsed %.1f seconds', elapsed.total_seconds())
+    LOGGER.debug(
+        'Program %s returned %d after %.1f seconds', 
+        program, 
+        process.returncode, 
+        elapsed.total_seconds())
 
-    return execution_result.stdout.decode('utf8')
+    process_stdout = [
+        line.strip() for line
+        in process_stdout.decode('utf8').strip().splitlines()
+    ]
+
+    return process_stdout
