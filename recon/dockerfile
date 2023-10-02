@@ -24,7 +24,7 @@ RUN apt-get purge -y python3-pip curl unzip
 RUN apt-get autoremove -y
 RUN apt-get install -y python3.11
 
-COPY ./src/*.py .
+COPY ./src/*.py ./
 
 ENV MQTT_HOST=localhost
 ENV MQTT_PORT=1883

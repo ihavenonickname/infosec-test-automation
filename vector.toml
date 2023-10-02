@@ -1,0 +1,17 @@
+[sources.log_file]
+type = "file"
+include = ["/logs/recon.log"]
+read_from = "beginning"
+
+[sinks.open_observe]
+type = "http"
+inputs = ["log_file"]
+uri = "http://open_observe:5080/api/recon/default/_json"
+method = "post"
+auth.strategy = "basic"
+auth.user = "admin@recon.com"
+auth.password = "pass123"
+compression = "gzip"
+encoding.codec = "json"
+encoding.timestamp_format = "rfc3339"
+healthcheck.enabled = false
