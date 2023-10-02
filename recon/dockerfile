@@ -1,0 +1,32 @@
+FROM kalilinux/kali-rolling
+
+RUN apt update
+
+RUN apt-get install -y amass
+RUN apt-get install -y subfinder
+RUN apt-get install -y httpx-toolkit
+RUN apt-get install -y zonemaster-cli
+
+RUN apt-get install -y curl unzip
+RUN curl -LO https://github.com/findomain/findomain/releases/latest/download/findomain-linux.zip
+RUN unzip findomain-linux.zip
+RUN chmod +x findomain
+RUN mv findomain /usr/bin/findomain
+
+RUN apt-get install -y python3-pip
+
+WORKDIR /app
+
+COPY ./requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+RUN apt-get purge -y python3-pip curl unzip
+RUN apt-get autoremove -y
+RUN apt-get install -y python3.11
+
+COPY ./src/*.py .
+
+ENV MQTT_HOST=localhost
+ENV MQTT_PORT=1883
+
+ENTRYPOINT ["python3.11", "./main.py"]
