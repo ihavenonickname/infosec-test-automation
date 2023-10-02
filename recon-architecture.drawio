@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2023-10-02T19:01:45.332Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0" etag="xpMVdY9zYCa6KN-Hy7gN" version="22.0.1" type="github">
+<mxfile host="app.diagrams.net" modified="2023-10-02T19:08:20.399Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0" etag="mkf266BePska1DLdYU04" version="22.0.1" type="github">
   <diagram name="Page-1" id="kyCc2YOPeomWr0MNeL3c">
     <mxGraphModel dx="1195" dy="659" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -46,11 +46,12 @@
         <mxCell id="fh4X_k5DSVuYVnnOU4cp-19" value="Reads logs from" style="edgeStyle=none;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=default;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=11;fontColor=default;endArrow=classic;" edge="1" parent="1" source="fh4X_k5DSVuYVnnOU4cp-17" target="fh4X_k5DSVuYVnnOU4cp-15">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="fh4X_k5DSVuYVnnOU4cp-26" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=default;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=11;fontColor=default;endArrow=classic;curved=1;" edge="1" parent="1" source="fh4X_k5DSVuYVnnOU4cp-17" target="fh4X_k5DSVuYVnnOU4cp-21">
-          <mxGeometry relative="1" as="geometry">
+        <mxCell id="fh4X_k5DSVuYVnnOU4cp-26" value="Sends POST to" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=default;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=11;fontColor=default;endArrow=classic;curved=1;" edge="1" parent="1" source="fh4X_k5DSVuYVnnOU4cp-17" target="fh4X_k5DSVuYVnnOU4cp-21">
+          <mxGeometry x="-0.5417" relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="590" y="918" />
             </Array>
+            <mxPoint as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="fh4X_k5DSVuYVnnOU4cp-17" value="Log shipper" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=11;fontColor=default;" vertex="1" parent="1">
@@ -66,7 +67,7 @@
           <mxGeometry x="320" y="848" width="240" height="30" as="geometry" />
         </mxCell>
         <mxCell id="fh4X_k5DSVuYVnnOU4cp-27" value="High-level architecture" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontFamily=Helvetica;fontColor=default;" vertex="1" parent="1">
-          <mxGeometry x="240" y="330" width="440" height="30" as="geometry" />
+          <mxGeometry x="240" y="346" width="440" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
