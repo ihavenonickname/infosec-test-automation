@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from typing import NamedTuple
 
-from log import LOGGER
+from log import LOGGER, extra
 
 
 _SEMAPHORE = asyncio.Semaphore(15)
@@ -20,8 +20,13 @@ class ReconTopics(NamedTuple):
     PORT_SCANNING = 'recon/port-scanning'
 
 
-async def run_program(program: str, *args: str, stdin_lines: list[str] | None = None) -> list[str]:
-    LOGGER.debug('Running program: %s %s', program, args)
+async def run_program(program: str,
+                      *args: str,
+                      stdin_lines: list[str] | None = None,
+                      trace_id: str | None = None) -> list[str]:
+    LOGGER.debug(
+        'Starting program execution',
+        extra=extra(trace_id, program=program, args=args))
 
     stdin_bytes = bytes()
 
@@ -43,10 +48,12 @@ async def run_program(program: str, *args: str, stdin_lines: list[str] | None = 
     elapsed = datetime.utcnow() - start
 
     LOGGER.debug(
-        'Program %s returned %d after %.1f seconds',
-        program,
-        process.returncode,
-        elapsed.total_seconds())
+        'Program execution ended',
+        extra=extra(
+            trace_id,
+            program=program,
+            return_code=process.returncode,
+            elapsed_seconds=round(elapsed.total_seconds(), 2)))
 
     process_stdout = [
         line.strip() for line

@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -5,10 +6,25 @@ import os
 LOGGER = logging.getLogger(__name__)
 
 
+def extra(trace_id, **kwargs):
+    return {'trace_id': trace_id, 'extra': kwargs}
+
+
+class JsonFormatter(logging.Formatter):
+    def format(self, record):
+        return json.dumps({
+            'timestamp': self.formatTime(record),
+            'level': record.levelname,
+            'trace_id': getattr(record, 'trace_id', None),
+            'message': record.getMessage(),
+            'module': record.module,
+            'function': record.funcName,
+            'custom_dimensions': getattr(record, 'custom_dimensions', None),
+        })
+
+
 def configure_log():
-    formatter = logging.Formatter(
-        fmt='[%(asctime)s] [%(levelname)s] [%(filename)s] %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S')
+    formatter = JsonFormatter()
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)

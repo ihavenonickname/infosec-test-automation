@@ -1,36 +1,56 @@
 import asyncio
+import json
+from collections import defaultdict
 
-import asyncio_mqtt as aiomqtt
+import aiomqtt
 
 from helper import MQTT_HOST, MQTT_PORT, run_program, check_installed, ReconTopics
-from log import LOGGER
+from log import LOGGER, extra
 
 
-async def enumerate_subdomains(domain: str) -> list[str]:
-    LOGGER.debug('Investigating domain %s', domain)
+async def enumerate_subdomains(domain: str, trace_id: str) -> list[str]:
+    LOGGER.debug('Enumerating subdomains',
+                 extra=extra(trace_id, domain=domain))
 
     async with asyncio.TaskGroup() as tg:
-        amass_task = tg.create_task(
-            run_program(
-                'amass', 'enum', '-passive', '-norecursive', '-silent', '-d', domain
-            )
-        )
-        subfinder_task = tg.create_task(
-            run_program('subfinder', '-silent', '-d', domain)
-        )
+        amass_task = tg.create_task(run_program(
+            'amass',
+            'enum',
+            '-passive',
+            '-norecursive',
+            '-silent',
+            '-d',
+            domain,
+            trace_id=trace_id))
+
+        subfinder_task = tg.create_task(run_program(
+            'subfinder',
+            '-silent',
+            '-d',
+            domain,
+            trace_id=trace_id))
+
         findomain_task = tg.create_task(
-            run_program('findomain', '-q', '-t', domain))
+            run_program('findomain', '-q', '-t', domain, trace_id=trace_id))
 
-    LOGGER.debug('Done with %s', domain)
+    subdomains = defaultdict(list)
 
-    subdomains = {
-        *amass_task.result(),
-        *subfinder_task.result(),
-        *findomain_task.result(),
-    }
+    for subdomain in amass_task.result():
+        subdomains[subdomain].append('amass')
 
-    for subdomain in subdomains:
-        LOGGER.info('Subdomain %s', subdomain)
+    for subdomain in subfinder_task.result():
+        subdomains[subdomain].append('subfinder')
+
+    for subdomain in findomain_task.result():
+        subdomains[subdomain].append('findomain')
+
+    for subdomain, found_by in subdomains.items():
+        found_by = ' '.join(found_by)
+        LOGGER.info(
+            'Subdomain found',
+            extra=extra(trace_id, subdomain=subdomain, found_by=found_by))
+
+    LOGGER.debug('Finished enumerating subdomains', extra=extra(trace_id))
 
     return subdomains
 
@@ -48,10 +68,15 @@ async def run_main_loop():
         async with client.messages() as messages:
             await client.subscribe(ReconTopics.SUBDOMAIN_ENUMERATION)
             async for message in messages:
-                LOGGER.debug(
-                    'Got message from topic %s with payload %s',
-                    message.topic, message.payload)
-                domain = message.payload.decode()
-                subdomains = await enumerate_subdomains(domain)
-                payload = '\n'.join(subdomains)
+                payload = json.loads(message.payload)
+                trace_id = payload['trace_id']
+                domain = payload['domain']
+
+                subdomains = await enumerate_subdomains(domain, trace_id)
+
+                payload = json.dumps({
+                    'trace_id': trace_id,
+                    'subdomains': subdomains,
+                })
+
                 await client.publish(ReconTopics.SUBDOMAINS_INFO_GATHERING, payload)

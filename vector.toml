@@ -3,9 +3,16 @@ type = "file"
 include = ["/logs/recon.log"]
 read_from = "beginning"
 
+[transforms.log_file_parser]
+inputs = ["log_file"]
+type = "remap"
+source = '''
+. = parse_json!(.message)
+'''
+
 [sinks.open_observe]
 type = "http"
-inputs = ["log_file"]
+inputs = ["log_file_parser"]
 uri = "http://open_observe:5080/api/recon/default/_json"
 method = "post"
 auth.strategy = "basic"

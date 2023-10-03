@@ -1,55 +1,46 @@
 import json
-from typing import NamedTuple
 
-import asyncio_mqtt as aiomqtt
+import aiomqtt
 
 from helper import MQTT_HOST, MQTT_PORT, check_installed, run_program, ReconTopics
-from log import LOGGER
+from log import LOGGER, extra
 
 
-class ProbeResultItem(NamedTuple):
-    input_domain: str
-    url: str
-    status_code: int
-    cnames: list
-    techs: list
+async def probe(domains: list, trace_id: str):
+    LOGGER.info('Starting information gathering', extra=extra(trace_id))
 
-
-async def probe(domains: list) -> list:
-    LOGGER.info('Investigating a batch of %d subdomains', len(domains))
-
-    args = ['httpx-toolkit', '-sc', '-td', '-json', '-probe']
-
-    httpx_result = await run_program(*args, stdin_lines=domains)
+    httpx_result = await run_program(
+        'httpx-toolkit',
+        '-sc',
+        '-td',
+        '-json',
+        '-probe',
+        stdin_lines=domains,
+        trace_id=trace_id)
 
     for line in httpx_result:
-        LOGGER.debug('httpx raw result: %s', line)
+        LOGGER.debug('httpx raw line', extra=extra(trace_id, line=line))
 
         serialized_line: dict = json.loads(line)
         subdomain = serialized_line['input']
 
         if serialized_line['failed']:
-            LOGGER.info('%s is unresponsive', subdomain)
+            LOGGER.info(
+                'Subdomain unresponsive',
+                extra=extra(trace_id, subdomain=subdomain))
             continue
 
-        item = ProbeResultItem(
-            input_domain=subdomain,
-            cnames=serialized_line.get('cnames'),
-            url=serialized_line.get('url'),
-            status_code=serialized_line.get('status-code'),
-            techs=serialized_line.get('technologies'))
+        LOGGER.info(
+            'Found some info',
+            extra=extra(
+                trace_id,
+                subdomain=subdomain,
+                cnames=serialized_line.get('cnames'),
+                url=serialized_line.get('url'),
+                status_code=serialized_line.get('status-code'),
+                techs=serialized_line.get('technologies')))
 
-        LOGGER.info('%s is responsive', item.input_domain)
-        LOGGER.info('%s replied %s',
-                    item.input_domain, item.status_code)
-        LOGGER.info('%s has full url %s',
-                    item.input_domain, item.url)
-        LOGGER.info('%s has canmes %s',
-                    item.input_domain, item.cnames)
-        LOGGER.info('%s has uses tech %s',
-                    item.input_domain, item.techs)
-
-    LOGGER.info('Done')
+    LOGGER.info('Finished information gathering', extra=extra(trace_id))
 
 
 async def run_main_loop():
@@ -63,6 +54,8 @@ async def run_main_loop():
         async with client.messages() as messages:
             await client.subscribe(ReconTopics.SUBDOMAINS_INFO_GATHERING)
             async for message in messages:
-                LOGGER.debug('Got message from topic %s', message.topic)
-                subdomains = message.payload.decode().splitlines()
-                await probe(subdomains)
+                payload = json.loads(message.payload)
+                trace_id = payload['trace_id']
+                subdomains = payload['subdomains']
+
+                await probe(subdomains, trace_id)

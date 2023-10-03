@@ -1,9 +1,11 @@
 import asyncio
+import json
+import uuid
 
-import asyncio_mqtt as aiomqtt
+import aiomqtt
+
 from helper import MQTT_HOST, MQTT_PORT, ReconTopics
-from log import LOGGER, configure_log
-
+from log import LOGGER, configure_log, extra
 import subdomains_info_gathering
 import subdomain_enumeration
 import dns_vuln_scan
@@ -25,10 +27,20 @@ async def main():
         async with client.messages() as messages:
             await client.subscribe(ReconTopics.START)
             async for message in messages:
-                LOGGER.debug('Got message from topic %s', message.topic)
-                domain = message.payload.decode()
-                await client.publish(ReconTopics.SUBDOMAIN_ENUMERATION, domain)
-                await client.publish(ReconTopics.DNS_VULN_SCAN, domain)
+                trace_id = str(uuid.uuid4())
+
+                LOGGER.debug(
+                    'Got message from topic %s',
+                    message.topic,
+                    extra=extra(trace_id))
+
+                payload = json.dumps({
+                    'trace_id': trace_id,
+                    'domain': message.payload.decode(),
+                })
+
+                await client.publish(ReconTopics.SUBDOMAIN_ENUMERATION, payload)
+                await client.publish(ReconTopics.DNS_VULN_SCAN, payload)
 
 if __name__ == '__main__':
     asyncio.run(main())
