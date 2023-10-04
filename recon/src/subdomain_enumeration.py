@@ -4,11 +4,14 @@ from collections import defaultdict
 
 import aiomqtt
 
-from helper import MQTT_HOST, MQTT_PORT, run_program, check_installed, ReconTopics
+from helper import loop_forever, run_program, check_installed, ReconTopics
 from log import LOGGER, extra
 
 
-async def enumerate_subdomains(domain: str, trace_id: str) -> list[str]:
+async def msg_handler(payload: dict, client: aiomqtt.Client) -> None:
+    trace_id = payload['trace_id']
+    domain = payload['domain']
+
     LOGGER.debug('Enumerating subdomains',
                  extra=extra(trace_id, domain=domain))
 
@@ -52,7 +55,10 @@ async def enumerate_subdomains(domain: str, trace_id: str) -> list[str]:
 
     LOGGER.debug('Finished enumerating subdomains', extra=extra(trace_id))
 
-    return subdomains
+    await client.publish(ReconTopics.SUBDOMAINS_INFO_GATHERING, json.dumps({
+        'trace_id': trace_id,
+        'subdomains': subdomains,
+    }))
 
 
 async def run_main_loop():
@@ -64,19 +70,7 @@ async def run_main_loop():
         LOGGER.critical('Some tools are not installed')
         return
 
-    async with aiomqtt.Client(MQTT_HOST, MQTT_PORT) as client:
-        async with client.messages() as messages:
-            await client.subscribe(ReconTopics.SUBDOMAIN_ENUMERATION)
-            async for message in messages:
-                payload = json.loads(message.payload)
-                trace_id = payload['trace_id']
-                domain = payload['domain']
-
-                subdomains = await enumerate_subdomains(domain, trace_id)
-
-                payload = json.dumps({
-                    'trace_id': trace_id,
-                    'subdomains': subdomains,
-                })
-
-                await client.publish(ReconTopics.SUBDOMAINS_INFO_GATHERING, payload)
+    await loop_forever(
+        topic_name=ReconTopics.SUBDOMAIN_ENUMERATION,
+        step_name='subdomain-enumeration',
+        msg_handler=msg_handler)

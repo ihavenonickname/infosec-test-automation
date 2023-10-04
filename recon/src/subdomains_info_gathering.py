@@ -2,11 +2,14 @@ import json
 
 import aiomqtt
 
-from helper import MQTT_HOST, MQTT_PORT, check_installed, run_program, ReconTopics
+from helper import check_installed, loop_forever, run_program, ReconTopics
 from log import LOGGER, extra
 
 
-async def probe(domains: list, trace_id: str):
+async def msg_handler(payload: dict, client: aiomqtt.Client):
+    trace_id = payload['trace_id']
+    domains = payload['subdomains']
+
     LOGGER.info('Starting information gathering', extra=extra(trace_id))
 
     httpx_result = await run_program(
@@ -50,12 +53,7 @@ async def run_main_loop():
         LOGGER.critical('Some tools are not installed')
         return
 
-    async with aiomqtt.Client(MQTT_HOST, MQTT_PORT) as client:
-        async with client.messages() as messages:
-            await client.subscribe(ReconTopics.SUBDOMAINS_INFO_GATHERING)
-            async for message in messages:
-                payload = json.loads(message.payload)
-                trace_id = payload['trace_id']
-                subdomains = payload['subdomains']
-
-                await probe(subdomains, trace_id)
+    await loop_forever(
+        topic_name=ReconTopics.SUBDOMAINS_INFO_GATHERING,
+        step_name='subdomains-info-gathering',
+        msg_handler=msg_handler)

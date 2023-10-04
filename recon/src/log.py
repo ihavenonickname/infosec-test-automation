@@ -7,7 +7,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def extra(trace_id, **kwargs):
-    return {'trace_id': trace_id, 'extra': kwargs}
+    return {'trace_id': trace_id, 'kwarg': kwargs}
 
 
 class JsonFormatter(logging.Formatter):
@@ -19,7 +19,7 @@ class JsonFormatter(logging.Formatter):
             'message': record.getMessage(),
             'module': record.module,
             'function': record.funcName,
-            'custom_dimensions': getattr(record, 'custom_dimensions', None),
+            'kwarg': getattr(record, 'kwarg', None),
         })
 
 

@@ -28,19 +28,20 @@ async def main():
             await client.subscribe(ReconTopics.START)
             async for message in messages:
                 trace_id = str(uuid.uuid4())
+                domain = message.payload.decode()
 
                 LOGGER.debug(
-                    'Got message from topic %s',
-                    message.topic,
-                    extra=extra(trace_id))
+                    'Starting pipeline',
+                    extra=extra(trace_id, domain=domain))
 
                 payload = json.dumps({
                     'trace_id': trace_id,
-                    'domain': message.payload.decode(),
+                    'domain': domain,
                 })
 
                 await client.publish(ReconTopics.SUBDOMAIN_ENUMERATION, payload)
                 await client.publish(ReconTopics.DNS_VULN_SCAN, payload)
+                await client.publish('webapp/start', payload)
 
 if __name__ == '__main__':
     asyncio.run(main())
