@@ -5,6 +5,8 @@ import os
 
 LOGGER = logging.getLogger(__name__)
 
+LOG_DIR = os.environ['LOG_DIR']
+
 
 def extra(trace_id, **kwargs):
     return {'trace_id': trace_id, 'kwarg': kwargs}
@@ -30,8 +32,9 @@ def configure_log():
     console_handler.setFormatter(formatter)
     console_handler.setLevel(logging.DEBUG)
 
-    os.makedirs('/logs', exist_ok=True)
-    file_handler = logging.FileHandler('/logs/recon.log', mode='w')
+    os.makedirs(LOG_DIR, exist_ok=True)
+    log_file_path = os.path.join(LOG_DIR, 'recon.log')
+    file_handler = logging.FileHandler(log_file_path, mode='w')
     file_handler.setFormatter(formatter)
     file_handler.setLevel(logging.DEBUG)
 

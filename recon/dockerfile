@@ -28,5 +28,6 @@ COPY ./src/*.py ./
 
 ENV MQTT_HOST=localhost
 ENV MQTT_PORT=1883
+ENV LOG_DIR=/logs
 
 ENTRYPOINT ["python3.11", "./main.py"]

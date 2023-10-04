@@ -47,6 +47,7 @@ services:
     environment:
       - MQTT_HOST=mosquitto
       - MQTT_PORT=2883
+      - LOG_DIR=/logs
     deploy:
       resources:
         limits:
