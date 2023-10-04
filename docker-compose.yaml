@@ -21,7 +21,7 @@ services:
       - ZO_ROOT_USER_EMAIL=admin@recon.com
       - ZO_ROOT_USER_PASSWORD=pass123
     volumes:
-      - ${PWD}/open_observe_data:/data
+      - open_observe_data:/data
     deploy:
       resources:
         limits:
@@ -54,3 +54,4 @@ services:
 
 volumes:
   shared_logs:
+  open_observe_data:
