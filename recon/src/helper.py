@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime
 
-from log import LOGGER, extra
+from custom_logger import LOGGER, extra
 
 
 _SEMAPHORE = asyncio.Semaphore(15)

@@ -6,10 +6,10 @@ import uuid
 
 import aiomqtt
 
-from log import LOGGER, configure_log, extra
-import dns_vuln_scan
-import subdomain_enumeration
-import subdomains_info_gathering
+from custom_logger import LOGGER, configure_log, extra
+from steps import dns_vuln_scan
+from steps import subdomain_enumeration
+from steps import subdomains_info_gathering
 
 
 MQTT_HOST = os.environ['MQTT_HOST']

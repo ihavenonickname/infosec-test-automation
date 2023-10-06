@@ -1,7 +1,7 @@
 import aiomqtt
 
 from helper import run_program
-from log import LOGGER, extra
+from custom_logger import LOGGER, extra
 from messaging_abstractions import handle
 
 

@@ -5,7 +5,7 @@ import traceback
 
 import aiomqtt
 
-from log import LOGGER, extra
+from custom_logger import LOGGER, extra
 
 def handle(topic):
     def create_wraper(func):
