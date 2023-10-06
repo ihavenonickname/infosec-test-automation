@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import traceback
 
 
 LOGGER = logging.getLogger(__name__)
@@ -14,6 +15,17 @@ def extra(trace_id, **kwargs):
 
 class JsonFormatter(logging.Formatter):
     def format(self, record):
+        exc_type, exc_base, exc_stacktrace = record.exc_info or (None, None, None)
+
+        if exc_stacktrace:
+            exc_stacktrace = '\n'.join(traceback.format_tb(exc_stacktrace))
+
+        if exc_type:
+            exc_type = exc_type.__name__
+
+        if exc_base:
+            exc_base = str(exc_base)
+
         return json.dumps({
             'timestamp': self.formatTime(record),
             'level': record.levelname,
@@ -22,6 +34,9 @@ class JsonFormatter(logging.Formatter):
             'module': record.module,
             'function': record.funcName,
             'kwarg': getattr(record, 'kwarg', None),
+            'exc_type': exc_type,
+            'exc_base': exc_base,
+            'exc_stacktrace': exc_stacktrace,
         })
 
 
