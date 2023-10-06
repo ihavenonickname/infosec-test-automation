@@ -1,70 +1,43 @@
 import asyncio
-import json
 import os
 import signal
-import uuid
 
-import aiomqtt
-
-from custom_logger import LOGGER, configure_log, extra
+from custom_logger import LOGGER, configure_log
+from messaging_abstractions import Fucker
 from steps import dns_scan
 from steps import subdomain_enumeration
 from steps import webapp_scan
 
 
-MQTT_HOST = os.environ['MQTT_HOST']
-MQTT_PORT = int(os.environ['MQTT_PORT'])
-
-
-async def watch_messages():
-    LOGGER.debug('Starting main run')
-
-    handlers = [
-        dns_scan.handler,
-        subdomain_enumeration.handler,
-        webapp_scan.handler,
-    ]
-
-    async with aiomqtt.Client(MQTT_HOST, MQTT_PORT) as client:
-        async with client.messages() as messages:
-            await client.subscribe('recon/#')
-            async with asyncio.TaskGroup() as tg:
-                async for message in messages:
-                    payload = json.loads(message.payload)
-                    if message.topic.matches('recon/start-pipeline'):
-                        payload['trace_id'] = str(uuid.uuid4())
-                        LOGGER.debug(
-                            'Starting pipeline',
-                            extra=extra(payload['trace_id'], domain=payload['domain']))
-                        payload = json.dumps(payload)
-                        await client.publish('recon/subdomain-enumeration', payload)
-                        await client.publish('recon/dns-scan', payload)
-                    else:
-                        for handler in handlers:
-                            if message.topic.matches(handler.topic):
-                                tg.create_task(handler(payload, client))
-
-
 async def main():
     configure_log()
 
-    LOGGER.debug('MQTT_HOST: %s', MQTT_HOST)
-    LOGGER.debug('MQTT_PORT: %d', MQTT_PORT)
+    mqtt_host = os.environ['MQTT_HOST']
+    mqtt_port = int(os.environ['MQTT_PORT'])
 
-    cancellation_event = asyncio.Event()
+    LOGGER.debug('MQTT_HOST: %s', mqtt_host)
+    LOGGER.debug('MQTT_PORT: %d', mqtt_port)
+
+    cancel_ev = asyncio.Event()
 
     def cancellation_handler(signum, frame):
         LOGGER.info('Handling signum %d', signum)
-        cancellation_event.set()
+        cancel_ev.set()
 
     signal.signal(signal.SIGINT, cancellation_handler)
     signal.signal(signal.SIGTERM, cancellation_handler)
 
-    task = asyncio.create_task(watch_messages())
+    fucker = Fucker(mqtt_host, mqtt_port, cancel_ev, [
+        dns_scan.handler,
+        subdomain_enumeration.handler,
+        webapp_scan.handler,
+    ])
+
+    task = asyncio.create_task(fucker.loop_forever())
 
     LOGGER.debug('Idling in the foreground')
 
-    await cancellation_event.wait()
+    await cancel_ev.wait()
 
     LOGGER.debug('Cancelling main task')
 

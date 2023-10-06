@@ -1,7 +1,7 @@
 
 import asyncio
 import json
-import traceback
+import uuid
 
 import aiomqtt
 
@@ -33,17 +33,8 @@ def handle(topic):
                     extra=extra(trace_id, topic=topic))
                 error = str(ex)
             except Exception as ex:
+                LOGGER.exception('Unhandled exception')
                 error = str(ex)
-                stacktrace = '\n'.join(
-                    traceback.format_tb(ex.__traceback__))
-                LOGGER.error(
-                    'Unhandled exception',
-                    extra=extra(
-                        trace_id,
-                        topic=topic,
-                        type=type(ex).__name__,
-                        exc_message=error,
-                        exc_stacktrace=stacktrace))
 
             update_end_task = client.publish('webapp/update/end', json.dumps({
                 'topic': topic,
@@ -58,3 +49,46 @@ def handle(topic):
         return wraper
 
     return create_wraper
+
+
+class Fucker():
+    def __init__(self, host: str, port: int, cancel_ev: asyncio.Event, handlers: list) -> None:
+        self._cancel_ev = cancel_ev
+        self._bg_tasks = set()
+        self._client = aiomqtt.Client(host, port)
+        self._handlers = handlers
+
+    async def _handle_message(self, message: aiomqtt.Message):
+        payload = json.loads(message.payload)
+
+        if message.topic.matches('recon/start-pipeline'):
+            trace_id = str(uuid.uuid4())
+
+            LOGGER.debug(
+                'Starting pipeline',
+                extra=extra(trace_id, domain=payload['domain']))
+
+            payload['trace_id'] = trace_id
+            payload = json.dumps(payload)
+
+            await self._client.publish('recon/subdomain-enumeration', payload)
+            await self._client.publish('recon/dns-scan', payload)
+        else:
+            for handler in self._handlers:
+                if message.topic.matches(handler.topic):
+                    coro = handler(payload, self._client)
+                    task = asyncio.create_task(coro)
+                    self._bg_tasks.add(task)
+                    task.add_done_callback(self._bg_tasks.remove)
+
+    async def loop_forever(self):
+        try:
+            async with self._client:
+                async with self._client.messages() as messages:
+                    await self._client.subscribe('recon/#')
+                    async for message in messages:
+                        await self._handle_message(message)
+        except Exception:
+            LOGGER.exception('Unhandled exception')
+
+        self._cancel_ev.set()
