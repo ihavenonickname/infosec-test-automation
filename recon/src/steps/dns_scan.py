@@ -5,7 +5,7 @@ from custom_logger import LOGGER, extra
 from messaging_abstractions import handle
 
 
-@handle('recon/dns-vuln-scan')
+@handle('recon/dns-scan')
 async def handler(payload: dict, client: aiomqtt.Client):
     trace_id = payload['trace_id']
     domain = payload['domain']

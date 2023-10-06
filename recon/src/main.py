@@ -7,7 +7,7 @@ import uuid
 import aiomqtt
 
 from custom_logger import LOGGER, configure_log, extra
-from steps import dns_vuln_scan
+from steps import dns_scan
 from steps import subdomain_enumeration
 from steps import subdomains_info_gathering
 
@@ -20,7 +20,7 @@ async def watch_messages():
     LOGGER.debug('Starting main run')
 
     handlers = [
-        dns_vuln_scan.handler,
+        dns_scan.handler,
         subdomain_enumeration.handler,
         subdomains_info_gathering.handler,
     ]
@@ -38,7 +38,7 @@ async def watch_messages():
                             extra=extra(payload['trace_id'], domain=payload['domain']))
                         payload = json.dumps(payload)
                         await client.publish('recon/subdomain-enumeration', payload)
-                        await client.publish('recon/dns-vuln-scan', payload)
+                        await client.publish('recon/dns-scan', payload)
                     else:
                         for handler in handlers:
                             if message.topic.matches(handler.topic):
