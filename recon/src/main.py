@@ -1,39 +1,48 @@
 import asyncio
 import json
+import os
 import signal
 import uuid
 
 import aiomqtt
 
-from helper import MQTT_HOST, MQTT_PORT, ReconTopics
 from log import LOGGER, configure_log, extra
-import subdomains_info_gathering
-import subdomain_enumeration
 import dns_vuln_scan
+import subdomain_enumeration
+import subdomains_info_gathering
 
 
-async def watch_start_messages():
+MQTT_HOST = os.environ['MQTT_HOST']
+MQTT_PORT = int(os.environ['MQTT_PORT'])
+
+
+async def watch_messages():
     LOGGER.debug('Starting main run')
+
+    handlers = [
+        dns_vuln_scan.handler,
+        subdomain_enumeration.handler,
+        subdomains_info_gathering.handler,
+    ]
 
     async with aiomqtt.Client(MQTT_HOST, MQTT_PORT) as client:
         async with client.messages() as messages:
-            await client.subscribe(ReconTopics.START)
-            async for message in messages:
-                trace_id = str(uuid.uuid4())
-                domain = message.payload.decode()
-
-                LOGGER.debug(
-                    'Starting pipeline',
-                    extra=extra(trace_id, domain=domain))
-
-                payload = json.dumps({
-                    'trace_id': trace_id,
-                    'domain': domain,
-                })
-
-                await client.publish(ReconTopics.SUBDOMAIN_ENUMERATION, payload)
-                await client.publish(ReconTopics.DNS_VULN_SCAN, payload)
-                await client.publish('webapp/start', payload)
+            await client.subscribe('recon/#')
+            async with asyncio.TaskGroup() as tg:
+                async for message in messages:
+                    payload = json.loads(message.payload)
+                    if message.topic.matches('recon/start-pipeline'):
+                        payload['trace_id'] = str(uuid.uuid4())
+                        LOGGER.debug(
+                            'Starting pipeline',
+                            extra=extra(payload['trace_id'], domain=payload['domain']))
+                        payload = json.dumps(payload)
+                        await client.publish('recon/subdomain-enumeration', payload)
+                        await client.publish('recon/dns-vuln-scan', payload)
+                    else:
+                        for handler in handlers:
+                            if message.topic.matches(handler.topic):
+                                tg.create_task(handler(payload, client))
 
 
 async def main():
@@ -51,27 +60,22 @@ async def main():
     signal.signal(signal.SIGINT, cancellation_handler)
     signal.signal(signal.SIGTERM, cancellation_handler)
 
-    tasks = [
-        asyncio.create_task(subdomain_enumeration.run_main_loop()),
-        asyncio.create_task(subdomains_info_gathering.run_main_loop()),
-        asyncio.create_task(dns_vuln_scan.run_main_loop()),
-        asyncio.create_task(watch_start_messages()),
-    ]
+    task = asyncio.create_task(watch_messages())
+
+    LOGGER.debug('Idling in the foreground')
 
     await cancellation_event.wait()
 
-    LOGGER.debug('Cancelling tasks')
+    LOGGER.debug('Cancelling main task')
 
-    for task in tasks:
-        task.cancel()
+    task.cancel()
 
-    LOGGER.debug('Waiting for tasks to finish')
+    LOGGER.debug('Waiting for main task to finish')
 
-    for task in tasks:
-        try:
-            await task
-        except asyncio.CancelledError:
-            pass
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
 
     LOGGER.debug('Bye')
 

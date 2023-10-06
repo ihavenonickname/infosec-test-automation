@@ -4,11 +4,13 @@ from collections import defaultdict
 
 import aiomqtt
 
-from helper import loop_forever, run_program, check_installed, ReconTopics
+from helper import run_program
 from log import LOGGER, extra
+from messaging_abstractions import handle
 
 
-async def msg_handler(payload: dict, client: aiomqtt.Client) -> None:
+@handle('recon/subdomain-enumeration')
+async def handler(payload: dict, client: aiomqtt.Client) -> None:
     trace_id = payload['trace_id']
     domain = payload['domain']
 
@@ -55,22 +57,7 @@ async def msg_handler(payload: dict, client: aiomqtt.Client) -> None:
 
     LOGGER.debug('Finished enumerating subdomains', extra=extra(trace_id))
 
-    await client.publish(ReconTopics.SUBDOMAINS_INFO_GATHERING, json.dumps({
+    await client.publish('recon/subdomains-info-gathering', json.dumps({
         'trace_id': trace_id,
         'subdomains': subdomains,
     }))
-
-
-async def run_main_loop():
-    LOGGER.debug('Checking if tools are installed')
-
-    tools_ok = await check_installed('amass', 'subfinder', 'findomain')
-
-    if not tools_ok:
-        LOGGER.critical('Some tools are not installed')
-        return
-
-    await loop_forever(
-        topic_name=ReconTopics.SUBDOMAIN_ENUMERATION,
-        step_name='subdomain-enumeration',
-        msg_handler=msg_handler)

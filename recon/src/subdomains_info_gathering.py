@@ -2,11 +2,13 @@ import json
 
 import aiomqtt
 
-from helper import check_installed, loop_forever, run_program, ReconTopics
+from helper import run_program
 from log import LOGGER, extra
+from messaging_abstractions import handle
 
 
-async def msg_handler(payload: dict, client: aiomqtt.Client):
+@handle('recon/subdomains-info-gathering')
+async def handler(payload: dict, client: aiomqtt.Client):
     trace_id = payload['trace_id']
     domains = payload['subdomains']
 
@@ -44,16 +46,3 @@ async def msg_handler(payload: dict, client: aiomqtt.Client):
                 techs=serialized_line.get('technologies')))
 
     LOGGER.info('Finished information gathering', extra=extra(trace_id))
-
-
-async def run_main_loop():
-    LOGGER.debug('Checking if tools are installed')
-
-    if not await check_installed('httpx-toolkit'):
-        LOGGER.critical('Some tools are not installed')
-        return
-
-    await loop_forever(
-        topic_name=ReconTopics.SUBDOMAINS_INFO_GATHERING,
-        step_name='subdomains-info-gathering',
-        msg_handler=msg_handler)

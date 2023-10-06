@@ -1,10 +1,12 @@
 import aiomqtt
 
-from helper import check_installed, loop_forever, run_program, ReconTopics
+from helper import run_program
 from log import LOGGER, extra
+from messaging_abstractions import handle
 
 
-async def msg_handler(payload: dict, client: aiomqtt.Client):
+@handle('recon/dns-vuln-scan')
+async def handler(payload: dict, client: aiomqtt.Client):
     trace_id = payload['trace_id']
     domain = payload['domain']
 
@@ -29,16 +31,3 @@ async def msg_handler(payload: dict, client: aiomqtt.Client):
                 extra=extra(trace_id, level=level, message=message))
 
     LOGGER.info('Finished DNS scan', extra=extra(trace_id))
-
-
-async def run_main_loop():
-    LOGGER.debug('Checking if tools are installed')
-
-    if not await check_installed('zonemaster-cli'):
-        LOGGER.critical('Some tools are not installed')
-        return
-
-    await loop_forever(
-        topic_name=ReconTopics.DNS_VULN_SCAN,
-        step_name='dns-vulnerability-scan',
-        msg_handler=msg_handler)
