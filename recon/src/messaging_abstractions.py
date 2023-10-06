@@ -1,64 +1,85 @@
 
 import asyncio
 import json
+from typing import Callable, Protocol
 import uuid
 
 import aiomqtt
 
 from custom_logger import LOGGER, extra
+from helper import extract_trace_id
 
-def handle(topic):
-    def create_wraper(func):
-        async def wraper(payload: dict, client: aiomqtt.Client):
-            trace_id = payload['trace_id']
 
-            try:
-                await client.publish('webapp/update/start', json.dumps({
-                    'topic': topic,
-                    'trace_id': trace_id,
-                }))
-            except asyncio.CancelledError:
-                LOGGER.warn(
-                    'Task cancelled before webapp/update/start',
-                    extra=extra(trace_id, topic=topic))
-                return
+class MessageHandler(Protocol):
+    async def __call__(self,
+                       payload: dict[str, object],
+                       client: aiomqtt.Client) -> None:
+        ...
 
-            error = None
 
-            try:
-                await func(payload, client)
-            except asyncio.CancelledError as ex:
-                LOGGER.warn(
-                    'Task cancelled',
-                    extra=extra(trace_id, topic=topic))
-                error = str(ex)
-            except Exception as ex:
-                LOGGER.exception('Unhandled exception')
-                error = str(ex)
+class MessageHandlerWraper():
+    topic: str
 
-            update_end_task = client.publish('webapp/update/end', json.dumps({
-                'topic': topic,
-                'error': error,
+    def __init__(self, topic: str, func: MessageHandler) -> None:
+        self._original_func = func
+        self.topic = topic
+
+    async def __call__(self,
+                       payload: dict[str, object],
+                       client: aiomqtt.Client) -> None:
+        trace_id: str = extract_trace_id(payload)
+
+        try:
+            await client.publish('webapp/update/start', json.dumps({
+                'topic': self.topic,
                 'trace_id': trace_id,
             }))
+        except asyncio.CancelledError:
+            LOGGER.warn(
+                'Task cancelled before webapp/update/start',
+                extra=extra(trace_id, topic=self.topic))
+            return
 
-            await asyncio.shield(update_end_task)
+        error = None
 
-        wraper.topic = topic
+        try:
+            await self._original_func(payload, client)
+        except asyncio.CancelledError as ex:
+            LOGGER.warn(
+                'Task cancelled',
+                extra=extra(trace_id, topic=self.topic))
+            error = str(ex)
+        except Exception as ex:
+            LOGGER.exception('Unhandled exception')
+            error = str(ex)
 
-        return wraper
+        update_end_task = client.publish('webapp/update/end', json.dumps({
+            'topic': self.topic,
+            'error': error,
+            'trace_id': trace_id,
+        }))
 
-    return create_wraper
+        await asyncio.shield(update_end_task)
 
 
-class Fucker():
-    def __init__(self, host: str, port: int, cancel_ev: asyncio.Event, handlers: list) -> None:
+class MessagingServer():
+    def __init__(self,
+                 host: str,
+                 port: int,
+                 cancel_ev: asyncio.Event,
+                 handlers: list[MessageHandlerWraper]) -> None:
         self._cancel_ev = cancel_ev
-        self._bg_tasks = set()
+        self._bg_tasks: set[asyncio.Task[None]] = set()
         self._client = aiomqtt.Client(host, port)
         self._handlers = handlers
 
-    async def _handle_message(self, message: aiomqtt.Message):
+    async def _handle_message(self, message: aiomqtt.Message) -> None:
+        if type(message.payload) != str and type(message.payload) != bytes:
+            LOGGER.warn(
+                'Payload must be str',
+                extra={'topic': message.topic})
+            return
+
         payload = json.loads(message.payload)
 
         if message.topic.matches('recon/start-pipeline'):
@@ -81,7 +102,7 @@ class Fucker():
                     self._bg_tasks.add(task)
                     task.add_done_callback(self._bg_tasks.remove)
 
-    async def loop_forever(self):
+    async def loop_forever(self) -> None:
         try:
             async with self._client:
                 async with self._client.messages() as messages:
@@ -92,3 +113,10 @@ class Fucker():
             LOGGER.exception('Unhandled exception')
 
         self._cancel_ev.set()
+
+
+def handle(topic: str) -> Callable[[MessageHandler], MessageHandlerWraper]:
+    def create_wraper(func: MessageHandler) -> MessageHandlerWraper:
+        return MessageHandlerWraper(topic, func)
+
+    return create_wraper

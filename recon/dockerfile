@@ -32,6 +32,8 @@ RUN apt-get install -y python3.11
 
 COPY ./src ./
 
+RUN python3.11 -m mypy --strict ./
+
 ENV MQTT_HOST=localhost
 ENV MQTT_PORT=1883
 ENV LOG_DIR=/logs

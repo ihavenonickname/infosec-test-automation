@@ -1,17 +1,19 @@
+from typing import cast
 import aiomqtt
 
-from helper import run_program
+from helper import run_program, extract_trace_id
 from custom_logger import LOGGER, extra
 from messaging_abstractions import handle
 
 
 @handle('recon/dns-scan')
-async def handler(payload: dict, client: aiomqtt.Client):
+async def handler(payload: dict[str, object], client: aiomqtt.Client) -> None:
+    trace_id = extract_trace_id(payload)
+
     try:
-        trace_id = payload['trace_id']
-        domain = payload['domain']
+        domain = cast(str, payload['domain'])
     except KeyError:
-        LOGGER.exception('Payload incomplete', extra=extra(trace_id))
+        LOGGER.exception('domain is required', extra=extra(trace_id))
         return
 
     LOGGER.info('Starting DNS scan', extra=extra(trace_id, domain=domain))

@@ -9,8 +9,8 @@ _SEMAPHORE = asyncio.Semaphore(15)
 
 async def run_program(program: str,
                       *args: str,
-                      stdin_lines: list[str] | None = None,
-                      trace_id: str | None = None) -> list[str]:
+                      trace_id: str,
+                      stdin_lines: list[str] | None = None) -> list[str]:
     LOGGER.debug(
         'Starting program execution',
         extra=extra(trace_id, program=program, args=args))
@@ -42,9 +42,17 @@ async def run_program(program: str,
             return_code=process.returncode,
             elapsed_seconds=round(elapsed.total_seconds(), 2)))
 
-    process_stdout = [
+    return [
         line.strip() for line
         in process_stdout.decode('utf8').strip().splitlines()
     ]
 
-    return process_stdout
+
+def extract_trace_id(payload: dict[str, object]) -> str:
+    if 'trace_id' not in payload:
+        raise Exception('trace_id not found in payload')
+
+    if type(payload['trace_id']) != str:
+        raise Exception('trace_id must be str')
+
+    return payload['trace_id']

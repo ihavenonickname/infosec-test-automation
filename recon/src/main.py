@@ -3,13 +3,13 @@ import os
 import signal
 
 from custom_logger import LOGGER, configure_log
-from messaging_abstractions import Fucker
+from messaging_abstractions import MessagingServer
 from steps import dns_scan
 from steps import subdomain_enumeration
 from steps import webapp_scan
 
 
-async def main():
+async def main() -> None:
     configure_log()
 
     mqtt_host = os.environ['MQTT_HOST']
@@ -20,20 +20,20 @@ async def main():
 
     cancel_ev = asyncio.Event()
 
-    def cancellation_handler(signum, frame):
+    def cancellation_handler(signum: int, frame: object) -> None:
         LOGGER.info('Handling signum %d', signum)
         cancel_ev.set()
 
     signal.signal(signal.SIGINT, cancellation_handler)
     signal.signal(signal.SIGTERM, cancellation_handler)
 
-    fucker = Fucker(mqtt_host, mqtt_port, cancel_ev, [
+    server = MessagingServer(mqtt_host, mqtt_port, cancel_ev, [
         dns_scan.handler,
         subdomain_enumeration.handler,
         webapp_scan.handler,
     ])
 
-    task = asyncio.create_task(fucker.loop_forever())
+    task = asyncio.create_task(server.loop_forever())
 
     LOGGER.debug('Idling in the foreground')
 
@@ -51,6 +51,7 @@ async def main():
         pass
 
     LOGGER.debug('Bye')
+
 
 if __name__ == '__main__':
     asyncio.run(main())

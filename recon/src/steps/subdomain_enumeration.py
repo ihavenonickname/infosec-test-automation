@@ -1,21 +1,23 @@
 import asyncio
 import json
 from collections import defaultdict
+from typing import cast
 
 import aiomqtt
 
-from helper import run_program
+from helper import extract_trace_id, run_program
 from custom_logger import LOGGER, extra
 from messaging_abstractions import handle
 
 
 @handle('recon/subdomain-enumeration')
-async def handler(payload: dict, client: aiomqtt.Client) -> None:
+async def handler(payload: dict[str, object], client: aiomqtt.Client) -> None:
+    trace_id = extract_trace_id(payload)
+
     try:
-        trace_id = payload['trace_id']
-        domain = payload['domain']
+        domain = cast(str, payload['domain'])
     except KeyError:
-        LOGGER.exception('Payload incomplete', extra=extra(trace_id))
+        LOGGER.exception('domain is required', extra=extra(trace_id))
         return
 
     LOGGER.debug('Enumerating subdomains',
@@ -54,10 +56,11 @@ async def handler(payload: dict, client: aiomqtt.Client) -> None:
         subdomains[subdomain].append('findomain')
 
     for subdomain, found_by in subdomains.items():
-        found_by = ' '.join(found_by)
         LOGGER.info(
             'Subdomain found',
-            extra=extra(trace_id, subdomain=subdomain, found_by=found_by))
+            extra=extra(trace_id,
+                        subdomain=subdomain,
+                        found_by=','.join(found_by)))
 
     LOGGER.debug('Finished enumerating subdomains', extra=extra(trace_id))
 
