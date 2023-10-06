@@ -9,8 +9,12 @@ from messaging_abstractions import handle
 
 @handle('recon/webapp-scan')
 async def handler(payload: dict, client: aiomqtt.Client):
-    trace_id = payload['trace_id']
-    domains = payload['hostnames']
+    try:
+        trace_id = payload['trace_id']
+        domains = payload['hostnames']
+    except KeyError:
+        LOGGER.exception('Payload incomplete', extra=extra(trace_id))
+        return
 
     LOGGER.info('Starting webapp scan', extra=extra(trace_id))
 

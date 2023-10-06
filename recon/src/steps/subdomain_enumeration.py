@@ -11,8 +11,12 @@ from messaging_abstractions import handle
 
 @handle('recon/subdomain-enumeration')
 async def handler(payload: dict, client: aiomqtt.Client) -> None:
-    trace_id = payload['trace_id']
-    domain = payload['domain']
+    try:
+        trace_id = payload['trace_id']
+        domain = payload['domain']
+    except KeyError:
+        LOGGER.exception('Payload incomplete', extra=extra(trace_id))
+        return
 
     LOGGER.debug('Enumerating subdomains',
                  extra=extra(trace_id, domain=domain))
