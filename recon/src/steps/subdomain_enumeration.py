@@ -57,7 +57,7 @@ async def handler(payload: dict, client: aiomqtt.Client) -> None:
 
     LOGGER.debug('Finished enumerating subdomains', extra=extra(trace_id))
 
-    await client.publish('recon/subdomains-info-gathering', json.dumps({
+    await client.publish('recon/webapp-scan', json.dumps({
         'trace_id': trace_id,
-        'subdomains': subdomains,
+        'hostnames': subdomains,
     }))

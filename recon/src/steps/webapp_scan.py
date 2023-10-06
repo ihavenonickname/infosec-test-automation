@@ -7,12 +7,12 @@ from custom_logger import LOGGER, extra
 from messaging_abstractions import handle
 
 
-@handle('recon/subdomains-info-gathering')
+@handle('recon/webapp-scan')
 async def handler(payload: dict, client: aiomqtt.Client):
     trace_id = payload['trace_id']
-    domains = payload['subdomains']
+    domains = payload['hostnames']
 
-    LOGGER.info('Starting information gathering', extra=extra(trace_id))
+    LOGGER.info('Starting webapp scan', extra=extra(trace_id))
 
     httpx_result = await run_program(
         'httpx-toolkit',
@@ -45,4 +45,4 @@ async def handler(payload: dict, client: aiomqtt.Client):
                 status_code=serialized_line.get('status-code'),
                 techs=serialized_line.get('technologies')))
 
-    LOGGER.info('Finished information gathering', extra=extra(trace_id))
+    LOGGER.info('Finished webapp scan', extra=extra(trace_id))

@@ -9,7 +9,7 @@ import aiomqtt
 from custom_logger import LOGGER, configure_log, extra
 from steps import dns_scan
 from steps import subdomain_enumeration
-from steps import subdomains_info_gathering
+from steps import webapp_scan
 
 
 MQTT_HOST = os.environ['MQTT_HOST']
@@ -22,7 +22,7 @@ async def watch_messages():
     handlers = [
         dns_scan.handler,
         subdomain_enumeration.handler,
-        subdomains_info_gathering.handler,
+        webapp_scan.handler,
     ]
 
     async with aiomqtt.Client(MQTT_HOST, MQTT_PORT) as client:
