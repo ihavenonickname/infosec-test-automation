@@ -6,7 +6,7 @@ services:
       - 2883:2883
       - 9001:9001
     volumes:
-      - ${PWD}/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ${PWD}/docker-compose-config/mosquitto.conf:/mosquitto/config/mosquitto.conf
     deploy:
       resources:
         limits:
@@ -29,7 +29,7 @@ services:
   vector:
     image: timberio/vector:0.33.0-alpine
     volumes:
-      - ${PWD}/vector.yaml:/etc/vector/vector.yaml
+      - ${PWD}/docker-compose-config/vector.yaml:/etc/vector/vector.yaml
       - shared_logs:/logs
     deploy:
       resources:
