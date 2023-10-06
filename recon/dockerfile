@@ -2,16 +2,22 @@ FROM kalilinux/kali-rolling
 
 RUN apt-get update
 
-RUN apt-get install -y amass
+# RUN apt-get install -y amass
 RUN apt-get install -y subfinder
 RUN apt-get install -y httpx-toolkit
 RUN apt-get install -y zonemaster-cli
 
 RUN apt-get install -y curl unzip
+
 RUN curl -LO https://github.com/findomain/findomain/releases/latest/download/findomain-linux.zip
 RUN unzip findomain-linux.zip
 RUN chmod +x findomain
 RUN mv findomain /usr/bin/findomain
+
+# RUN curl -LO https://github.com/OJ/gobuster/releases/latest/download/gobuster_Linux_x86_64.tar.gz
+# RUN tar -xzf gobuster_Linux_x86_64.tar.gz --to-stdout gobuster > gobuster
+# RUN chmod +x gobuster
+# RUN mv gobuster /usr/bin/gobuster
 
 RUN apt-get install -y python3-pip
 

@@ -22,15 +22,15 @@ async def handler(payload: dict, client: aiomqtt.Client) -> None:
                  extra=extra(trace_id, domain=domain))
 
     async with asyncio.TaskGroup() as tg:
-        amass_task = tg.create_task(run_program(
-            'amass',
-            'enum',
-            '-passive',
-            '-norecursive',
-            '-silent',
-            '-d',
-            domain,
-            trace_id=trace_id))
+        # amass_task = tg.create_task(run_program(
+        #     'amass',
+        #     'enum',
+        #     '-passive',
+        #     '-norecursive',
+        #     '-silent',
+        #     '-d',
+        #     domain,
+        #     trace_id=trace_id))
 
         subfinder_task = tg.create_task(run_program(
             'subfinder',
@@ -44,8 +44,8 @@ async def handler(payload: dict, client: aiomqtt.Client) -> None:
 
     subdomains = defaultdict(list)
 
-    for subdomain in amass_task.result():
-        subdomains[subdomain].append('amass')
+    # for subdomain in amass_task.result():
+    #     subdomains[subdomain].append('amass')
 
     for subdomain in subfinder_task.result():
         subdomains[subdomain].append('subfinder')
