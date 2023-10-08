@@ -30,13 +30,13 @@ class MessageHandlerWraper():
         trace_id: str = extract_trace_id(payload)
 
         try:
-            await client.publish('webapp/update/start', json.dumps({
+            await client.publish('webapp/pipeline/step/start', json.dumps({
                 'topic': self.topic,
                 'trace_id': trace_id,
             }))
         except asyncio.CancelledError:
             LOGGER.warn(
-                'Task cancelled before webapp/update/start',
+                'Task cancelled before webapp/pipeline/step/start',
                 extra=extra(trace_id, topic=self.topic))
             return
 
@@ -53,7 +53,7 @@ class MessageHandlerWraper():
             LOGGER.exception('Unhandled exception')
             error = str(ex)
 
-        update_end_task = client.publish('webapp/update/end', json.dumps({
+        update_end_task = client.publish('webapp/pipeline/step/end', json.dumps({
             'topic': self.topic,
             'error': error,
             'trace_id': trace_id,
@@ -82,7 +82,7 @@ class MessagingServer():
 
         payload = json.loads(message.payload)
 
-        if message.topic.matches('recon/start-pipeline'):
+        if message.topic.matches('recon/pipeline/start'):
             trace_id = str(uuid.uuid4())
 
             LOGGER.debug(
@@ -92,8 +92,9 @@ class MessagingServer():
             payload['trace_id'] = trace_id
             payload = json.dumps(payload)
 
-            await self._client.publish('recon/subdomain-enumeration', payload)
-            await self._client.publish('recon/dns-scan', payload)
+            await self._client.publish('webapp/pipeline/start', payload)
+            await self._client.publish('recon/subdomain-enumeration/start', payload)
+            await self._client.publish('recon/dns-scan/start', payload)
         else:
             for handler in self._handlers:
                 if message.topic.matches(handler.topic):

@@ -6,7 +6,7 @@ import traceback
 
 LOGGER = logging.getLogger(__name__)
 
-LOG_DIR = os.environ['LOG_DIR']
+LOGS_DIR = os.environ['LOGS_DIR']
 
 
 def extra(trace_id: str, **kwargs: object) -> dict[str, object]:
@@ -43,8 +43,8 @@ def configure_log() -> None:
     console_handler.setFormatter(formatter)
     console_handler.setLevel(logging.DEBUG)
 
-    os.makedirs(LOG_DIR, exist_ok=True)
-    log_file_path = os.path.join(LOG_DIR, 'recon.log')
+    os.makedirs(LOGS_DIR, exist_ok=True)
+    log_file_path = os.path.join(LOGS_DIR, 'recon.log')
     file_handler = logging.FileHandler(log_file_path, mode='w')
     file_handler.setFormatter(formatter)
     file_handler.setLevel(logging.DEBUG)

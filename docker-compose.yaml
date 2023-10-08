@@ -7,6 +7,7 @@ services:
       - 9001:9001
     volumes:
       - ${PWD}/docker-etc/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquito/data
     deploy:
       resources:
         limits:
@@ -30,7 +31,7 @@ services:
     image: timberio/vector:0.33.0-alpine
     volumes:
       - ${PWD}/docker-etc/vector.yaml:/etc/vector/vector.yaml
-      - shared_logs:/logs
+      - recon_logs:/logs
     deploy:
       resources:
         limits:
@@ -43,16 +44,38 @@ services:
       - open_observe
       - vector
     volumes:
-      - shared_logs:/logs
+      - recon_logs:/logs
     environment:
       - MQTT_HOST=mosquitto
       - MQTT_PORT=2883
-      - LOG_DIR=/logs
+      - LOGS_DIR=/logs
     deploy:
       resources:
         limits:
           memory: 150M
+  webapp:
+    build:
+      context: ./webapp
+    depends_on:
+      - mosquitto
+      - open_observe
+      - recon
+    ports:
+      - 8000:8000
+    volumes:
+      - webapp_data:/data
+    environment:
+      - MQTT_HOST=mosquitto
+      - MQTT_PORT=2883
+      - DATA_DIR=/data
+      - OPEN_OBSERVE_BASE_URL=http://localhost:5080
+    deploy:
+      resources:
+        limits:
+          memory: 100M
 
 volumes:
-  shared_logs:
+  recon_logs:
   open_observe_data:
+  mosquitto_data:
+  webapp_data:

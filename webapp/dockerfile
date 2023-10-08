@@ -1,0 +1,30 @@
+FROM python:3.11-slim AS builder
+
+RUN apt-get update
+
+RUN apt-get install -y build-essential
+
+WORKDIR /app
+
+COPY ./requirements.txt ./
+
+RUN pip install --no-cache-dir --target=/vendor -r requirements.txt
+
+COPY ./ ./
+
+FROM python:3.11-slim
+
+ENV PYTHONPATH=/vendor
+
+ENV MQTT_HOST=localhost
+ENV MQTT_PORT=2883
+ENV DATA_DIR=/data
+ENV OPEN_OBSERVE_BASE_URL=http://localhost:5080
+
+WORKDIR /app
+
+COPY --from=builder /app ./
+
+COPY --from=builder /vendor /vendor
+
+ENTRYPOINT ["python", "./src/main.py"]

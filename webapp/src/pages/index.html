@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/static/starlord.ico" type="image/x-icon">
+    <title>Star Lord Recon</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+
+    <style>
+        html,
+        body {
+            height: 100%;
+        }
+
+        .scrollable-div {
+            height: 50%;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+            width: 70%;
+        }
+
+        .pipelines-container {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+            align-content: space-around;
+            row-gap: 30px;
+        }
+
+        .pipeline-execution {
+            width: 32%;
+        }
+    </style>
+</head>
+
+<body class="has-text-centered">
+
+    <h1 class="title is-1">Star Lord Recon</h1>
+    <p class="subtitle is-4">A distributed and containerized reconnaissance pipeline</p>
+
+    <section class="section">
+        <div class="container">
+            <div class="columns is-centered">
+                <div class="field has-addons column is-4 has-text-centered">
+                    <p v-if="isSendingRequest">
+                        Wait...
+                    </p>
+                    <template v-else>
+                        <div class="control is-expanded">
+                            <input id="txt-domain" class="input" type="text" placeholder="example.com"
+                                :disabled="isSendingRequest" v-model="domain">
+                        </div>
+                        <div class="control">
+                            <a class="button is-primary" @click="postStartReconPipeline">
+                                Start
+                            </a>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container pipelines-container">
+            <div v-for="e in pipelineExecutions" :key="e.trace_id" class="card pipeline-execution">
+                <div class="card-content">
+                    <p class="title is-4">
+                        {{e.domain}}
+                    </p>
+                    <p class="subtitle is-6 is-family-monospace">
+                        {{e.trace_id}}
+                    </p>
+                    <p v-for="u in e.updates" :key="e.trace_id + e.topic">
+                        <span class="has-text-weight-semibold">{{getStepName(u.topic)}}</span> {{getDescription(u)}}
+                    </p>
+                </div>
+                <footer class="card-footer">
+                    <p class="card-footer-item">
+                        <span>
+                            <a :href="e.logs_url">See logs on OpenObserve</a>
+                        </span>
+                    </p>
+                </footer>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://unpkg.com/vue@3.3.4/dist/vue.global.prod.js"></script>
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    isSendingRequest: false,
+                    domain: '',
+                    pipelineExecutions: []
+                };
+            },
+            methods: {
+                async postStartReconPipeline() {
+                    this.isSendingRequest = true;
+                    try {
+                        const res = await fetch('/pipelines', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ domain: this.domain }),
+                        });
+
+                        if (res.status === 400) {
+                            const { detail } = await res.json();
+                            alert(detail);
+                        } else if (res.status !== 200) {
+                            alert(await res.text());
+                        } else {
+                            this.domain = '';
+                        }
+                    } finally {
+                        this.isSendingRequest = false;
+                    }
+                },
+                async fetchUpdates() {
+                    const resp = await fetch('/pipelines?count=10');
+                    this.pipelineExecutions = await resp.json();
+                },
+                getDescription(update) {
+                    if (update.error !== null) {
+                        return 'error!';
+                    }
+
+                    if (update.end_at === null) {
+                        return 'in progress...';
+                    }
+
+                    const startAt = new Date(update.start_at);
+                    const endAt = new Date(update.end_at);
+                    const diffMillis = endAt.getTime() - startAt.getTime();
+                    const diffSecs = Math.round(diffMillis / 1000);
+
+                    return `done in ${diffSecs}s`;
+                },
+                getStepName(topic) {
+                    switch (topic) {
+                        case 'recon/subdomain-enumeration/start':
+                            return 'Subdomain enumeration';
+                        case 'recon/dns-scan/start':
+                            return 'DNS scan';
+                        case 'recon/webapp-scan/start':
+                            return 'Webapp scan';
+                    }
+
+                    console.warn('unknown topic: ' + topic);
+
+                    return 'UNKOWN';
+                }
+            },
+            async mounted() {
+                await this.fetchUpdates()
+                setInterval(() => this.fetchUpdates(), 5000);
+            }
+        });
+
+        app.mount('body');
+    </script>
+</body>
+
+</html>

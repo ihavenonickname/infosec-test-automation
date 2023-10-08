@@ -12,8 +12,31 @@
             "env": {
                 "MQTT_HOST": "localhost",
                 "MQTT_PORT": "2883",
-                "LOG_DIR": "./"
+                "LOGS_DIR": "./"
             }
+        },
+        {
+            "name": "WebApp",
+            "type": "python",
+            "request": "launch",
+            "cwd": "./webapp/",
+            "program": "./src/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "DATA_DIR": "./",
+                "MQTT_HOST": "localhost",
+                "MQTT_PORT": "2883",
+                "OPEN_OBSERVE_BASE_URL": "http://localhost:5080"
+            }
+        },
+        {
+            "name": "366",
+            "type": "python",
+            "request": "launch",
+            "program": "./366.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }

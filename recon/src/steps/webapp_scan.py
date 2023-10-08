@@ -8,7 +8,7 @@ from custom_logger import LOGGER, extra
 from messaging_abstractions import handle
 
 
-@handle('recon/webapp-scan')
+@handle('recon/webapp-scan/start')
 async def handler(payload: dict[str, object], client: aiomqtt.Client) -> None:
     trace_id = extract_trace_id(payload)
 

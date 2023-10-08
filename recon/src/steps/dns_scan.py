@@ -6,7 +6,7 @@ from custom_logger import LOGGER, extra
 from messaging_abstractions import handle
 
 
-@handle('recon/dns-scan')
+@handle('recon/dns-scan/start')
 async def handler(payload: dict[str, object], client: aiomqtt.Client) -> None:
     trace_id = extract_trace_id(payload)
 

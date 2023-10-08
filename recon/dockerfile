@@ -35,7 +35,7 @@ COPY ./src ./
 RUN python3.11 -m mypy --strict ./
 
 ENV MQTT_HOST=localhost
-ENV MQTT_PORT=1883
-ENV LOG_DIR=/logs
+ENV MQTT_PORT=2883
+ENV LOGS_DIR=/logs
 
 ENTRYPOINT ["python3.11", "./main.py"]

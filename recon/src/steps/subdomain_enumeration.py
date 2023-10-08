@@ -10,7 +10,7 @@ from custom_logger import LOGGER, extra
 from messaging_abstractions import handle
 
 
-@handle('recon/subdomain-enumeration')
+@handle('recon/subdomain-enumeration/start')
 async def handler(payload: dict[str, object], client: aiomqtt.Client) -> None:
     trace_id = extract_trace_id(payload)
 
@@ -64,7 +64,7 @@ async def handler(payload: dict[str, object], client: aiomqtt.Client) -> None:
 
     LOGGER.debug('Finished enumerating subdomains', extra=extra(trace_id))
 
-    await client.publish('recon/webapp-scan', json.dumps({
+    await client.publish('recon/webapp-scan/start', json.dumps({
         'trace_id': trace_id,
         'hostnames': subdomains,
     }))
