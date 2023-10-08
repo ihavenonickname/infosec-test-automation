@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  vector:
+    image: timberio/vector:0.33.0-alpine
+    volumes:
+      - ${PWD}/docker-compose/etc/vector.yaml:/etc/vector/vector.yaml
+      - recon_logs:/logs
+    deploy:
+      resources:
+        limits:
+          memory: 90M

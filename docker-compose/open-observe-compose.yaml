@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  open_observe:
+    image: public.ecr.aws/zinclabs/openobserve:latest-simd
+    ports:
+      - 5080:5080
+    environment:
+      - RUST_LOG=warn
+      - ZO_DATA_DIR=/data
+      - ZO_ROOT_USER_EMAIL=admin@recon.com
+      - ZO_ROOT_USER_PASSWORD=pass123
+    volumes:
+      - open_observe_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 250M
+
+volumes:
+  open_observe_data:

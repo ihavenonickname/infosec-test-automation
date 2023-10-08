@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+  recon:
+    build:
+      context: ./recon
+    depends_on:
+      - mosquitto
+      - open_observe
+      - vector
+    volumes:
+      - recon_logs:/logs
+    environment:
+      - MQTT_HOST=mosquitto
+      - MQTT_PORT=2883
+      - LOGS_DIR=/logs
+    deploy:
+      resources:
+        limits:
+          memory: 150M
+
+volumes:
+  recon_logs:
