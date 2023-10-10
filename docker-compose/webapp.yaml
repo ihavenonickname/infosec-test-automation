@@ -3,7 +3,9 @@ version: '3'
 services:
   webapp:
     build:
-      context: ./webapp
+      context: ../webapp
+    profiles:
+      - webapp
     depends_on:
       - mosquitto
       - open_observe

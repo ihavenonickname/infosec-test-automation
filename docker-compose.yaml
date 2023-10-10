@@ -1,0 +1,8 @@
+version: '3'
+
+include:
+  - docker-compose/mosquitto.yaml
+  - docker-compose/open-observe.yaml
+  - docker-compose/recon.yaml
+  - docker-compose/vector.yaml
+  - docker-compose/webapp.yaml
