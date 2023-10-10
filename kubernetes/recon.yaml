@@ -1,0 +1,82 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: recon-logs-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vector-config-map
+data:
+  vector.yaml: |-
+    sources:
+      log_file:
+        type: "file"
+        include:
+          - "/logs/recon.log"
+        read_from: "end"
+    transforms:
+      log_file_parser:
+        inputs:
+          - "log_file"
+        type: "remap"
+        source: ". = parse_json!(.message)"
+    sinks:
+      open_observe:
+        type: "http"
+        inputs:
+          - "log_file_parser"
+        uri: "http://open_observe:5080/api/recon/default/_json"
+        method: "post"
+        auth:
+          strategy: "basic"
+          user: "admin@recon.com"
+          password: "pass123"
+        compression: "gzip"
+        encoding:
+          codec: "json"
+          timestamp_format: "rfc3339"
+        healthcheck:
+          enabled: false
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vector-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vector
+  template:
+    metadata:
+      labels:
+        app: vector
+    spec:
+      containers:
+        - name: vector
+          image: timberio/vector:0.33.0-alpine
+          volumeMounts:
+            - name: vector-config-map
+              mountPath: /etc/vector/vector.yaml
+              subPath: vector.yaml
+          resources:
+            limits:
+              memory: 90Mi
+      volumes:
+        - name: vector-config-map
+          configMap:
+            name: vector-config-map
+        - name: recon-logs-pvc
+          persistentVolumeClaim:
+            claimName: recon-logs-pvc

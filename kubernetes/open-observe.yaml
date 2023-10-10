@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: open-observe-data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: open-observe-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: open-observe
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5080
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: open-observe-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: open-observe
+  template:
+    metadata:
+      labels:
+        app: open-observe
+    spec:
+      containers:
+        - name: open-observe
+          image: public.ecr.aws/zinclabs/openobserve:latest-simd
+          ports:
+            - containerPort: 5080
+          volumeMounts:
+            - name: open-observe-data-pvc
+              mountPath: /data
+          resources:
+            limits:
+              memory: 250Mi
+      volumes:
+        - name: open-observe-data-pvc
+          persistentVolumeClaim:
+            claimName: open-observe-data-pvc
