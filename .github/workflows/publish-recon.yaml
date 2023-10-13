@@ -22,9 +22,9 @@ jobs:
           ./recon/
       - name: Log in to DigitalOcean Container Registry
         run: >-
-          echo ${{ secrets.DIGITAL_OCEAN_API_TOKEN }} |
+          echo ${{ secrets.DIGITAL_OCEAN_TOKEN }} |
           docker login
-          --username ${{ secrets.DIGITAL_OCEAN_API_TOKEN }}
+          --username ${{ secrets.DIGITAL_OCEAN_TOKEN }}
           --password-stdin registry.digitalocean.com
       - name: Push image to DigitalOcean Container Registry
         run: docker image push registry.digitalocean.com/star-lord-cr/recon:latest
