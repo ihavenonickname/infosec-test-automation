@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  promtail:
+    image: grafana/promtail:2.9.1
+    volumes:
+      - ${PWD}/docker-compose/etc/promtail.yaml:/var/lib/promtail.yaml
+      - promtail_data:/var/lib/promtail
+      - recon_logs:/logs
+    command: -config.file=/var/lib/promtail.yaml
+
+volumes:
+  promtail_data:

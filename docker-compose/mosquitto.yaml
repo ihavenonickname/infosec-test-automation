@@ -3,9 +3,6 @@ version: '3'
 services:
   mosquitto:
     image: eclipse-mosquitto:2.0
-    ports:
-      - 2883:2883
-      - 9001:9001
     volumes:
       - ${PWD}/docker-compose/etc/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - mosquitto_data:/mosquito/data

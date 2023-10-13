@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  loki:
+    image: grafana/loki:2.9.1
+    volumes:
+      - ${PWD}/docker-compose/etc/loki:/etc/loki
+    command: -config.file=/etc/loki/config.yaml

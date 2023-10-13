@@ -4,23 +4,16 @@ services:
   webapp:
     build:
       context: ../webapp
-    profiles:
-      - webapp
     depends_on:
       - mosquitto
-      - open_observe
       - recon
-    ports:
-      - 8000:8000
+      - authelia
     volumes:
       - webapp_data:/data
     environment:
       - MQTT_HOST=mosquitto
       - MQTT_PORT=2883
       - DATA_DIR=/data
-      - OPEN_OBSERVE_BASE_URL=http://open_observe:5080
-      - OPEN_OBSERVE_ROOT_EMAIL=admin@recon.com
-      - OPEN_OBSERVE_ROOT_PASSWORD=pass123
     deploy:
       resources:
         limits:

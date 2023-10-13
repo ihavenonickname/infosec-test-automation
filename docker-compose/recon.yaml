@@ -6,8 +6,6 @@ services:
       context: ../recon
     depends_on:
       - mosquitto
-      - open_observe
-      - vector
     volumes:
       - recon_logs:/logs
     environment:

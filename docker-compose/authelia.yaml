@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+  authelia:
+    container_name: authelia
+    image: authelia/authelia:latest
+    volumes:
+      - ${PWD}/docker-compose/etc/authelia/assets:/config/assets
+      - ${PWD}/docker-compose/etc/authelia/configuration.yaml:/config/configuration.yaml
+      - ${PWD}/docker-compose/etc/authelia/users_database.yaml:/config/users_database.yaml
+      - authelia_data:/config
+    command:
+      - authelia
+      - --config=/config/configuration.yaml
+
+volumes:
+  authelia_data:

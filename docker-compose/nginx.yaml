@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  nginx:
+    image: nginx:latest
+    depends_on:
+      - webapp
+      - grafana
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ${PWD}/docker-compose/etc/nginx:/etc/nginx

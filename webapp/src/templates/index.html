@@ -93,18 +93,13 @@
                     <p class="title is-4">
                         [[e.domain]]
                     </p>
-                    <p class="subtitle is-6 is-family-monospace">
-                        [[e.trace_id]]
-                    </p>
                     <p v-for="u in e.updates" :key="e.trace_id + e.topic">
                         <span class="has-text-weight-semibold">[[getStepName(u.topic)]]</span> [[getDescription(u)]]
                     </p>
                 </div>
                 <footer class="card-footer">
                     <p class="card-footer-item">
-                        <span>
-                            <a :href="e.logs_url">See logs on OpenObserve</a>
-                        </span>
+                        [[e.trace_id]]
                     </p>
                 </footer>
             </div>

@@ -26,10 +26,7 @@
             "env": {
                 "DATA_DIR": "./",
                 "MQTT_HOST": "localhost",
-                "MQTT_PORT": "2883",
-                "OPEN_OBSERVE_BASE_URL": "http://localhost:5080",
-                "OPEN_OBSERVE_ROOT_EMAIL": "admin@recon.com",
-                "OPEN_OBSERVE_ROOT_PASSWORD": "pass123"
+                "MQTT_PORT": "2883"
             }
         },
         {
