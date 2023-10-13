@@ -51,60 +51,74 @@
     </style>
 </head>
 
-<body class="section">
-
-    <div id="page-title-wraper">
-        <h1 id="page-title" class="title is-1">
-            <figure id="fig-star-lord" class="image is-64x64">
-                <img src="/static/star-lord.png">
-            </figure>
-            Star Lord Recon
-        </h1>
-    </div>
-    <p class="subtitle is-4 has-text-centered">A distributed and containerized reconnaissance pipeline</p>
-
-    <section class="section">
-        <div class="container">
-            <div class="columns is-centered">
-                <div class="field has-addons column is-4 has-text-centered">
-                    <p v-if="isSendingRequest">
-                        Wait...
-                    </p>
-                    <template v-else>
-                        <div class="control is-expanded">
-                            <input id="txt-domain" class="input is-large" type="text" placeholder="example.com"
-                                :disabled="isSendingRequest" v-model="domain">
-                        </div>
-                        <div class="control">
-                            <a class="button is-large" @click="postStartReconPipeline">
-                                Start
-                            </a>
-                        </div>
-                    </template>
+<body>
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+        <div class="navbar-end">
+            <div class="navbar-item">
+                <div class="buttons">
+                    <a class="button is-light" href="https://auth.star-lord.net/logout">
+                        Log out
+                    </a>
                 </div>
             </div>
         </div>
-    </section>
+    </nav>
 
-    <section v-if="!isSendingRequest" class="section">
-        <div class="container pipelines-container">
-            <div v-for="e in pipelineExecutions" :key="e.trace_id" class="card pipeline-execution has-background-grey-lighter is-rounded">
-                <div class="card-content">
-                    <p class="title is-4">
-                        [[e.domain]]
-                    </p>
-                    <p v-for="u in e.updates" :key="e.trace_id + e.topic">
-                        <span class="has-text-weight-semibold">[[getStepName(u.topic)]]</span> [[getDescription(u)]]
-                    </p>
-                </div>
-                <footer class="card-footer">
-                    <p class="card-footer-item">
-                        [[e.trace_id]]
-                    </p>
-                </footer>
-            </div>
+    <main class="section">
+        <div id="page-title-wraper">
+            <h1 id="page-title" class="title is-1">
+                <figure id="fig-star-lord" class="image is-64x64">
+                    <img src="/static/star-lord.png">
+                </figure>
+                Star Lord Recon
+            </h1>
         </div>
-    </section>
+        <p class="subtitle is-4 has-text-centered">A distributed and containerized reconnaissance pipeline</p>
+
+        <section class="section">
+            <div class="container">
+                <div class="columns is-centered">
+                    <div class="field has-addons column is-4 has-text-centered">
+                        <p v-if="isSendingRequest">
+                            Wait...
+                        </p>
+                        <template v-else>
+                            <div class="control is-expanded">
+                                <input id="txt-domain" class="input is-large" type="text" placeholder="example.com"
+                                    :disabled="isSendingRequest" v-model="domain">
+                            </div>
+                            <div class="control">
+                                <a class="button is-large" @click="postStartReconPipeline">
+                                    Start
+                                </a>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section v-if="!isSendingRequest" class="section">
+            <div class="container pipelines-container">
+                <div v-for="e in pipelineExecutions" :key="e.trace_id"
+                    class="card pipeline-execution has-background-grey-lighter is-rounded">
+                    <div class="card-content">
+                        <p class="title is-4">
+                            [[e.domain]]
+                        </p>
+                        <p v-for="u in e.updates" :key="e.trace_id + e.topic">
+                            <span class="has-text-weight-semibold">[[getStepName(u.topic)]]</span> [[getDescription(u)]]
+                        </p>
+                    </div>
+                    <footer class="card-footer">
+                        <p class="card-footer-item">
+                            [[e.trace_id]]
+                        </p>
+                    </footer>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <script src="https://unpkg.com/vue@3.3.4/dist/vue.global.prod.js"></script>
     <script>
