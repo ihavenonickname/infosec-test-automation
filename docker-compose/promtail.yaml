@@ -8,6 +8,10 @@ services:
       - promtail_data:/var/lib/promtail
       - recon_logs:/logs
     command: -config.file=/var/lib/promtail.yaml
+    deploy:
+      resources:
+        limits:
+          memory: 150M
 
 volumes:
   promtail_data:

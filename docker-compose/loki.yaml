@@ -6,3 +6,7 @@ services:
     volumes:
       - ${PWD}/docker-compose/etc/loki:/etc/loki
     command: -config.file=/etc/loki/config.yaml
+    deploy:
+      resources:
+        limits:
+          memory: 200M

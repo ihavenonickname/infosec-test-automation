@@ -12,6 +12,10 @@ services:
     command:
       - authelia
       - --config=/config/configuration.yaml
+    deploy:
+      resources:
+        limits:
+          memory: 200M
 
 volumes:
   authelia_data:

@@ -11,3 +11,7 @@ services:
       - 443:443
     volumes:
       - ${PWD}/docker-compose/etc/nginx:/etc/nginx
+    deploy:
+      resources:
+        limits:
+          memory: 10M
