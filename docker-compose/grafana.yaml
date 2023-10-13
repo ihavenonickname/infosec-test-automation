@@ -17,8 +17,10 @@ services:
       - GF_LOG_LEVEL=WARNING
 
       - GF_SERVER_ROOT_URL=https://grafana.star-lord.net
+      - GF_AUTH_SIGNOUT_REDIRECT_URL=https://auth.star-lord.net/logout
       - GF_AUTH_GENERIC_OAUTH_ENABLED=true
       - GF_AUTH_GENERIC_OAUTH_NAME=Authelia
+      - GF_AUTH_GENERIC_OAUTH_AUTO_LOGIN=true
       - GF_AUTH_GENERIC_OAUTH_CLIENT_ID=grafana
       - GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET=iFxxk5hSAKxvuE4IkeCcX0wLgi8PUXP0jgYjiXnTdeuTFZuZYrAX97g46rC8egyw
       - GF_AUTH_GENERIC_OAUTH_SCOPES=openid profile email groups
@@ -38,4 +40,3 @@ services:
 
 volumes:
   grafana_data:
-# $argon2id$v=19$m=65536,t=3,p=4$Jbwkw7YWN5DfEt7HwFXwvg$qd6t4MQiPdJTslX4l84SplZFrjVeE/vSyosMWzkMZCs
