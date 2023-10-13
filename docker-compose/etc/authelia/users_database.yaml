@@ -1,16 +1,15 @@
 users:
+  starlord:
+    disabled: false
+    displayname: Star Lord
+    password: '$argon2id$v=19$m=65536,t=3,p=4$bllkC/VrSngrTSWgj51DMQ$gjCLJAKAbO7l5iovCNdImWL58judd1wSsZRrZ4zkPaQ'
+    email: starlord@recon.com
+    groups:
+      - admin
   analyst:
     disabled: false
     displayname: Analyst
     password: '$argon2id$v=19$m=65536,t=3,p=4$bllkC/VrSngrTSWgj51DMQ$gjCLJAKAbO7l5iovCNdImWL58judd1wSsZRrZ4zkPaQ'
     email: analyst@recon.com
-    groups:
-      - admins
-      - dev
-  test1:
-    disabled: false
-    displayname: Test One
-    password: '$argon2id$v=19$m=65536,t=3,p=4$w0VSLMrXT17H22n7SapFsA$5vsOzS27pccy/OjSmvWgrdD4KC8IiCpwECWDj64Si0A'
-    email: test1@recon.com
     groups:
       - dev
