@@ -26,8 +26,7 @@
             "env": {
                 "DATA_DIR": "./",
                 "MQTT_HOST": "localhost",
-                "MQTT_PORT": "2883",
-                "OPEN_OBSERVE_BASE_URL": "http://localhost:5080"
+                "MQTT_PORT": "2883"
             }
         },
         {

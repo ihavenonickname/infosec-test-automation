@@ -3,9 +3,10 @@ import base64
 import contextlib
 import os
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import uvicorn
 import validators
@@ -17,7 +18,6 @@ from messaging import MessagingApi
 MQTT_HOST = os.environ['MQTT_HOST']
 MQTT_PORT = os.environ['MQTT_PORT']
 DATA_DIR = os.environ['DATA_DIR']
-OPEN_OBSERVE_BASE_URL = os.environ['OPEN_OBSERVE_BASE_URL']
 
 DATABASE = Database(os.path.join(DATA_DIR, 'webapp.db'))
 MESSAGING_API = MessagingApi(MQTT_HOST, int(MQTT_PORT))
@@ -47,15 +47,23 @@ app.mount(
     StaticFiles(directory='./static'),
     'static')
 
+templates = Jinja2Templates(directory='./src/templates')
+
 
 class StartReconPipelineModel(BaseModel):
     domain: str
 
 
+class CreateUserModel(BaseModel):
+    email: str
+    first_name: str
+    last_name: str
+    password: str
+
+
 @app.get('/', response_class=HTMLResponse)
-def get_index():
-    with open('./src/pages/index.html') as f:
-        return f.read()
+def get_index(request: Request):
+    return templates.TemplateResponse('index.html', {'request': request})
 
 
 @app.post('/pipelines')
@@ -72,8 +80,8 @@ def get_updates(count: int, last_trace_id: str | None = None):
 
     for execution in executions:
         trace_id = execution['trace_id']
-        query = base64.b64encode(f"trace_id='{trace_id}'".encode('utf8')).decode('ascii')
-        execution['logs_url'] = f'{OPEN_OBSERVE_BASE_URL}/web/logs?stream=default&period=15d&refresh=0&sql_mode=false&query={query}&org_identifier=recon'
+        query = base64.b64encode(
+            f"trace_id='{trace_id}'".encode('utf8')).decode('ascii')
 
     return executions
 

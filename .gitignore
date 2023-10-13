@@ -1,5 +1,4 @@
 __pycache__
-open_observe_data
 *.log
 .mypy_cache
 *.db

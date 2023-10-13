@@ -1,0 +1,11 @@
+version: '3'
+
+include:
+  - docker-compose/authelia.yaml
+  - docker-compose/grafana.yaml
+  - docker-compose/loki.yaml
+  - docker-compose/mosquitto.yaml
+  - docker-compose/nginx.yaml
+  - docker-compose/promtail.yaml
+  - docker-compose/recon.yaml
+  - docker-compose/webapp.yaml
