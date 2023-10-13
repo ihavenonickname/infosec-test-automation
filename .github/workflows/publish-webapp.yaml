@@ -1,0 +1,32 @@
+name: Publish Webapp Image
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - webapp/**
+
+jobs:
+  push_to_registry:
+    name: Push webapp image to DigitalOcean Container Registry
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Build image
+        run: >-
+          docker build
+          --tag registry.digitalocean.com/star-lord-cr/webapp:latest
+          -f ./webapp/dockerfile
+          ./webapp/
+      - name: Log in to DigitalOcean Container Registry
+        run: >-
+          echo ${{ secrets.DIGITAL_OCEAN_TOKEN }} |
+          docker login
+          --username ${{ secrets.DIGITAL_OCEAN_TOKEN }}
+          --password-stdin registry.digitalocean.com
+      - name: Push image to DigitalOcean Container Registry
+        run: docker image push registry.digitalocean.com/star-lord-cr/webapp:latest
+      - name: Log out from DigitalOcean Container Registry
+        run: docker logout registry.digitalocean.com
