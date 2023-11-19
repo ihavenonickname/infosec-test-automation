@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mosquitto-data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config-map
+data:
+  mosquitto.conf: |-
+    allow_anonymous true
+    listener 2883
+    persistence true
+    persistence_location /mosquitto/data/
+    log_dest file /mosquitto/log/mosquitto.log
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto-service
+spec:
+  selector:
+    app: mosquitto
+  ports:
+    - protocol: TCP
+      port: 2883
+      targetPort: 2883
+    - protocol: TCP
+      port: 9001
+      targetPort: 9001
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mosquitto
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+    spec:
+      containers:
+        - name: mosquitto
+          image: eclipse-mosquitto:2.0
+          ports:
+            - containerPort: 2883
+            - containerPort: 9001
+          volumeMounts:
+            - name: mosquitto-config-map
+              mountPath: /mosquitto/config/mosquitto.conf
+              subPath: mosquitto.conf
+            - name: mosquitto-data-pvc
+              mountPath: /mosquito/data
+          resources:
+            limits:
+              memory: 10Mi
+      volumes:
+        - name: mosquitto-config-map
+          configMap:
+            name: mosquitto-config-map
+        - name: mosquitto-data-pvc
+          persistentVolumeClaim:
+            claimName: mosquitto-data-pvc
